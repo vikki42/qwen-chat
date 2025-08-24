@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Qwen Chat</title>
   <style>
     * {
@@ -345,6 +345,15 @@
       .theme-toggle {
         order: 2;
       }
+      .input-container {
+        position: sticky;
+        bottom: 0;
+        background-color: var(--bg);
+        z-index: 10;
+      }
+      #chat-box {
+        padding-bottom: 80px;
+      }
     }
   </style>
 </head>
@@ -380,6 +389,17 @@
           <label for="file-input" class="upload-btn">📎</label>
           <input type="file" id="file-input" accept="image/*,.txt,.pdf,.xlsx,.xls" style="display: none;" />
         </div>
+        <div class="model-select">
+          <select id="model-select" style="padding: 8px; border: 1px solid #555; border-radius: 6px; background: #40414f; color: white; font-size: 14px; min-width: 120px;">
+            <option value="qwen/qwen3-32b">Qwen3-32B</option>
+            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
+            <option value="openai/gpt-oss-20b">openai/gpt-oss-20b</option>
+            <option value="deepseek-r1-distill-llama-70b">deepseek-r1-distill-llama-70b</option>
+            <option value="gemma2-9b-it">gemma2-9b-it</option>
+            <option value="moonshotai/kimi-k2-instruct">moonshotai/kimi-k2-instruct</option>
+            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+          </select>
+        </div>
         <button onclick="sendMessage()">Send</button>
       </div>
     </div>
@@ -389,12 +409,11 @@
   <div id="toast">Copied to clipboard!</div>
 
   <!-- Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js  "></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js  "></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js  "></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
-    // Initialize PDF.js worker
-    window.pdfjsLib && (pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js  ');
+    window.pdfjsLib && (pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js');
   </script>
 
   <script>
@@ -659,14 +678,14 @@
       chatBox.appendChild(thinking);
       scrollToBottom();
 
-      fetch("https://api.groq.com/openai/v1/chat/completions  ", {
+      fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${GROQ_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "qwen/qwen3-32b",
+          model: document.getElementById("model-select").value,
           messages: messages,
           temperature: 0.7,
           max_tokens: 1024,
@@ -803,5 +822,3 @@
   </script>
 </body>
 </html>
-
-
