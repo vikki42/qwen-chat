@@ -75,6 +75,66 @@
       border-color: var(--accent);
     }
 
+    .conversation-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .conversation-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #2a2a2a;
+      color: #ddd;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+      border-left: 3px solid transparent;
+    }
+
+    .conversation-item:hover {
+      background: #3a3a3a;
+      border-left-color: var(--accent);
+    }
+
+    .conversation-item.active {
+      background: var(--accent);
+      color: white;
+      font-weight: 500;
+    }
+
+    .delete-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #aaa;
+      font-size: 14px;
+      opacity: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #f44336;
+      color: white;
+    }
+
+    .conversation-item:hover .delete-btn {
+      opacity: 1;
+    }
+
     .theme-toggle {
       display: flex;
       align-items: center;
@@ -334,7 +394,7 @@
       .sidebar {
         width: 100%;
         height: auto;
-        max-height: 80px;
+        max-height: 100px;
         padding: 12px;
         flex-direction: row;
         gap: 10px;
@@ -350,6 +410,9 @@
       .theme-toggle {
         order: 2;
         margin-left: auto;
+      }
+      .conversation-list {
+        display: none;
       }
       #chat-box {
         padding: 16px;
@@ -379,7 +442,6 @@
       }
     }
 
-    /* Full-screen fix for mobile */
     @supports (-webkit-touch-callout: none) {
       body {
         min-height: 100vh;
@@ -399,6 +461,9 @@
     <!-- Sidebar -->
     <div class="sidebar">
       <button class="new-chat-btn">+ New Chat</button>
+      <div class="conversation-list">
+        <!-- Conversations will appear here -->
+      </div>
       <div class="theme-toggle">
         <span>🌙</span>
         <label class="switch">
@@ -412,18 +477,18 @@
     <div class="chat-container">
       <div id="chat-box">
         <div class="message welcome">
-          <h2>Qwen3</h2>
-          <p>Welcome! I'm powered by <strong>qwen/qwen3-32b</strong> via Groq.</p>
+          <h2>SIRI</h2>
+          <p>Welcome! I'm powered by <strong>All Open Source AI Models</strong> via Groq.</p>
           <p>Upload images, PDFs, Excel, or speak your message.</p>
         </div>
       </div>
 
       <!-- Input Area -->
       <div class="input-container">
-        <button id="mic-btn" title="Voice Input">🎤</button>
+        <button id="mic-btn" title="Voice Input">🎙️</button>
         <input type="text" id="user-input" placeholder="Message Qwen..." />
         <div class="file-upload">
-          <label for="file-input" class="upload-btn">📎</label>
+          <label for="file-input" class="upload-btn">📁</label>
           <input type="file" id="file-input" accept="image/*,.txt,.pdf,.xlsx,.xls" style="display: none;" />
         </div>
         <div class="model-select">
@@ -465,13 +530,136 @@
     const newChatBtn = document.querySelector(".new-chat-btn");
     const toast = document.getElementById("toast");
     const darkModeToggle = document.getElementById("dark-mode-toggle");
+    const conversationList = document.querySelector(".conversation-list");
 
     // Chat State
     let messages = [];
     let welcomeRemoved = false;
+    let conversations = JSON.parse(localStorage.getItem("qwen-conversations")) || {};
+    let activeChatId = localStorage.getItem("qwen-active-chat") || null;
 
-    // Load saved chat
-    loadChat();
+    // Generate new chat ID
+    function generateChatId() {
+      return "chat_" + Date.now();
+    }
+
+    // Save current chat
+    function saveCurrentChat() {
+      if (messages.length === 0) return;
+
+      const chatId = activeChatId || generateChatId();
+      const title = messages.length > 0 
+        ? messages[0].content.substring(0, 30) + "..." 
+        : "New Chat";
+
+      conversations[chatId] = {
+        id: chatId,
+        title,
+        messages: [...messages],
+        timestamp: new Date().toISOString()
+      };
+
+      activeChatId = chatId;
+      localStorage.setItem("qwen-conversations", JSON.stringify(conversations));
+      localStorage.setItem("qwen-active-chat", chatId);
+      renderConversationList();
+    }
+
+    // Render conversation list
+    function renderConversationList() {
+      conversationList.innerHTML = "";
+      const sorted = Object.values(conversations)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      sorted.forEach(chat => {
+        const item = document.createElement("div");
+        item.className = `conversation-item ${chat.id === activeChatId ? "active" : ""}`;
+        item.dataset.id = chat.id;
+
+        // Truncate title
+        const span = document.createElement("span");
+        span.textContent = chat.title;
+        item.appendChild(span);
+
+        // Delete button
+        const deleteBtn = document.createElement("span");
+        deleteBtn.className = "delete-btn";
+        deleteBtn.textContent = "×";
+        deleteBtn.title = "Delete conversation";
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (confirm("Delete this conversation?")) {
+            delete conversations[chat.id];
+            if (activeChatId === chat.id) {
+              // Start new chat
+              messages = [];
+              welcomeRemoved = false;
+              activeChatId = null;
+              localStorage.removeItem("qwen-active-chat");
+              chatBox.innerHTML = `
+                <div class="message welcome">
+                  <h2>Qwen3</h2>
+                  <p>Welcome! I'm powered by <strong>qwen/qwen3-32b</strong>.</p>
+                  <p>Start a new conversation.</p>
+                </div>
+              `;
+            }
+            localStorage.setItem("qwen-conversations", JSON.stringify(conversations));
+            renderConversationList();
+          }
+        };
+
+        item.appendChild(deleteBtn);
+        item.onclick = () => {
+          loadConversation(chat.id);
+        };
+
+        conversationList.appendChild(item);
+      });
+    }
+
+    // Load a conversation
+    function loadConversation(chatId) {
+      const chat = conversations[chatId];
+      if (!chat) return;
+
+      activeChatId = chatId;
+      messages = [...chat.messages];
+      welcomeRemoved = true;
+
+      chatBox.innerHTML = "";
+      messages.forEach(msg => {
+        const sender = msg.role === "user" ? "You" : "Qwen";
+        const role = msg.role === "user" ? "user" : "bot";
+        addMessageToUI(role, sender, msg.content);
+      });
+
+      document.querySelector(".welcome")?.remove();
+      localStorage.setItem("qwen-active-chat", chatId);
+      renderConversationList();
+    }
+
+    // New Chat
+    newChatBtn.addEventListener("click", () => {
+      // Save current chat before clearing
+      if (messages.length > 0) {
+        saveCurrentChat();
+      }
+
+      // Start fresh
+      messages = [];
+      welcomeRemoved = false;
+      activeChatId = null;
+      localStorage.removeItem("qwen-active-chat");
+
+      chatBox.innerHTML = `
+        <div class="message welcome">
+          <h2>Qwen3</h2>
+          <p>Welcome! I'm powered by <strong>qwen/qwen3-32b</strong>.</p>
+          <p>Start a new conversation.</p>
+        </div>
+      `;
+    });
 
     // 🌙 Dark Mode
     if (localStorage.getItem("dark-mode") === "true") {
@@ -488,7 +676,7 @@
       }
     });
 
-    // 🎤 Voice Recognition
+    // 🎙️ Voice Recognition
     let recognizing = false;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = SpeechRecognition ? new SpeechRecognition() : null;
@@ -500,19 +688,19 @@
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         userInput.value = transcript;
-        micBtn.textContent = "🎤";
+        micBtn.textContent = "🎙️";
         recognizing = false;
       };
 
       recognition.onerror = () => {
-        micBtn.textContent = "🎤";
+        micBtn.textContent = "🎙️";
         recognizing = false;
       };
 
       micBtn.addEventListener("click", () => {
         if (recognizing) {
           recognition.stop();
-          micBtn.textContent = "🎤";
+          micBtn.textContent = "🎙️";
           recognizing = false;
         } else {
           recognition.start();
@@ -524,7 +712,7 @@
       micBtn.style.display = "none";
     }
 
-    // 📎 File Upload Handler
+    // 📁 File Upload Handler
     fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -666,9 +854,9 @@
             });
         }
 
-        // 📎 Other
+        // 📁 Other
         else {
-          addMessageToUI("user", "You", `📎 ${file.name}`);
+          addMessageToUI("user", "You", `📁 ${file.name}`);
           messages.push({
             role: "user",
             content: `File uploaded: ${file.name}`
@@ -717,7 +905,7 @@
         chatBox.removeChild(thinking);
         addMessageToUI("bot", "Qwen", reply);
         messages.push({ role: "assistant", content: reply });
-        saveChat();
+        saveCurrentChat();
       })
       .catch(err => {
         thinking.querySelector(".content").textContent = "Error: " + err.message;
@@ -770,48 +958,6 @@
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // 💾 Save Chat
-    function saveChat() {
-      localStorage.setItem("qwen-chat-history", JSON.stringify({ messages, welcomeRemoved }));
-    }
-
-    // 🔁 Load Chat
-    function loadChat() {
-      const saved = localStorage.getItem("qwen-chat-history");
-      if (saved) {
-        const { messages: savedMessages, welcomeRemoved: savedWelcome } = JSON.parse(saved);
-        messages = savedMessages;
-        welcomeRemoved = savedWelcome;
-
-        chatBox.innerHTML = "";
-        messages.forEach(msg => {
-          if (msg.content) {
-            const sender = msg.role === "user" ? "You" : "Qwen";
-            const role = msg.role === "user" ? "user" : "bot";
-            addMessageToUI(role, sender, msg.content);
-          }
-        });
-
-        if (welcomeRemoved) {
-          document.querySelector(".welcome")?.remove();
-        }
-      }
-    }
-
-    // ➕ New Chat
-    newChatBtn.addEventListener("click", () => {
-      if (confirm("Start a new chat?")) {
-        messages = [];
-        welcomeRemoved = false;
-        chatBox.innerHTML = `
-          <div class="message welcome">
-            <h2>Qwen3</h2>
-            <p>Welcome! I'm powered by <strong>qwen/qwen3-32b</strong>.</p>
-          </div>`;
-        localStorage.removeItem("qwen-chat-history");
-      }
-    });
-
     // 📤 Export Chat
     const exportBtn = document.createElement("button");
     exportBtn.id = "export-btn";
@@ -836,6 +982,9 @@
         sendMessage();
       }
     });
+
+    // Load on startup
+    renderConversationList();
   </script>
 </body>
 </html>
