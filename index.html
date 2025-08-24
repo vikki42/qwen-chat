@@ -57,7 +57,6 @@
       z-index: 20;
     }
 
-    /* Mobile: Hide sidebar */
     @media (max-width: 768px) {
       .sidebar {
         position: absolute;
@@ -306,14 +305,17 @@
       color: #ddd;
     }
 
-    /* Input Area */
+    /* Input Area - Always visible on mobile */
     .input-container {
-      padding: 16px 20px;
+      position: sticky;
+      bottom: 0;
+      padding: 12px 16px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       background: var(--bg);
       border-top: 1px solid var(--border);
       backdrop-filter: blur(10px);
+      z-index: 20;
     }
 
     #mic-btn, .upload-btn, .copy-btn, #export-btn {
@@ -341,6 +343,8 @@
       outline: none;
       resize: none;
       min-height: 48px;
+      max-height: 100px;
+      overflow-y: auto;
     }
 
     #user-input:focus {
@@ -446,6 +450,27 @@
     @media (max-width: 768px) {
       .overlay.open {
         display: block;
+      }
+    }
+
+    /* Spacer to prevent last message from hiding under input */
+    #chat-box:after {
+      content: '';
+      display: block;
+      height: 80px;
+    }
+
+    /* Full-screen mobile fix */
+    @supports (-webkit-touch-callout: none) {
+      body {
+        min-height: 100vh;
+        height: -webkit-fill-available;
+      }
+      .app {
+        height: -webkit-fill-available;
+      }
+      .chat-container {
+        height: 100%;
       }
     }
   </style>
@@ -627,9 +652,7 @@
         item.appendChild(deleteBtn);
         item.onclick = () => {
           loadConversation(chat.id);
-          if (isMobile) {
-            toggleSidebar(); // Close sidebar after selecting
-          }
+          if (isMobile) toggleSidebar(); // Close after select
         };
 
         conversationList.appendChild(item);
@@ -659,9 +682,7 @@
 
     // New Chat
     newChatBtn.addEventListener("click", () => {
-      if (messages.length > 0) {
-        saveCurrentChat();
-      }
+      if (messages.length > 0) saveCurrentChat();
 
       messages = [];
       welcomeRemoved = false;
