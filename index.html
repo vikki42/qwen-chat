@@ -380,19 +380,10 @@
           <label for="file-input" class="upload-btn">📎</label>
           <input type="file" id="file-input" accept="image/*,.txt,.pdf,.xlsx,.xls" style="display: none;" />
         </div>
-        <div class="model-select">
-  <select id="model-select" style="padding: 8px; border: 1px solid #555; border-radius: 6px; background: #40414f; color: white; font-size: 14px;">
-    <option value="qwen/qwen3-32b">Qwen3-32B</option>
-    <option value="qwen/qwen3-72b">Qwen3-72B</option>
-    <option value="qwen/qwen3-14b">Qwen3-14B</option>
-    <option value="qwen/qwen3-4b">Qwen3-4B</option>
-  </select>
-</div>
         <button onclick="sendMessage()">Send</button>
       </div>
     </div>
   </div>
-  
 
   <!-- Toast Notification -->
   <div id="toast">Copied to clipboard!</div>
@@ -668,19 +659,19 @@
       chatBox.appendChild(thinking);
       scrollToBottom();
 
-      fetch("https://api.groq.com/openai/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    "Authorization": `Bearer ${GROQ_API_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    model: document.getElementById("model-select").value,  // ← Updated!
-    messages: messages,
-    temperature: 0.7,
-    max_tokens: 1024,
-  }),
-})
+      fetch("https://api.groq.com/openai/v1/chat/completions  ", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "qwen/qwen3-32b",
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 1024,
+        }),
+      })
       .then(res => {
         if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
         return res.json();
@@ -696,12 +687,7 @@
         thinking.querySelector(".content").textContent = "Error: " + err.message;
       });
     }
-// Listen for model change
-document.getElementById("model-select").addEventListener("change", function() {
-  const selectedModel = this.value;
-  // Optional: Show which model is active
-  console.log("Selected model:", selectedModel);
-});
+
     // 📧 Add Message to UI
     function addMessageToUI(role, sender, text) {
       const msg = document.createElement("div");
