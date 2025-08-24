@@ -12,78 +12,73 @@
     }
 
     :root {
-      --bg: #343541;
-      --sidebar-bg: #202123;
-      --text: #e8eaed;
-      --input-bg: #40414f;
-      --border: #555;
-      --user-bubble: #007CF3;
-      --bot-bubble: #444654;
-      --btn-hover: #0065cc;
-      --toast-bg: #333;
-    }
-
-    .dark-mode {
       --bg: #111;
       --sidebar-bg: #1a1a1a;
-      --text: #eee;
+      --text: #e8eaed;
       --input-bg: #2d2d2e;
-      --border: #555;
-      --user-bubble: #0a84ff;
-      --bot-bubble: #2c2c2e;
-      --toast-bg: #222;
+      --border: #444;
+      --user-bubble: #007CF3;
+      --bot-bubble: #25252d;
+      --btn-hover: #0065cc;
+      --toast-bg: #333;
+      --accent: #007CF3;
+      --radius: 12px;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
       background-color: var(--bg);
       color: var(--text);
-      transition: background-color 0.3s;
       height: 100vh;
       overflow: hidden;
+      display: flex;
     }
 
     .app {
-      display: flex;
       width: 100%;
-      max-width: 1400px;
       height: 100vh;
-      margin: 0 auto;
+      display: flex;
+      overflow: hidden;
     }
 
+    /* Sidebar */
     .sidebar {
-      width: 260px;
-      background-color: var(--sidebar-bg);
+      width: 280px;
+      background: var(--sidebar-bg);
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 16px;
       border-right: 1px solid var(--border);
+      transition: width 0.3s ease;
+      overflow-y: auto;
     }
 
     .new-chat-btn {
-      background-color: var(--input-bg);
+      background: transparent;
       color: white;
-      border: none;
+      border: 1px solid var(--border);
       padding: 12px 16px;
-      border-radius: 6px;
+      border-radius: var(--radius);
       font-size: 14px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       transition: all 0.2s;
+      justify-content: center;
     }
 
     .new-chat-btn:hover {
-      background-color: #555;
+      background: var(--accent);
+      border-color: var(--accent);
     }
 
     .theme-toggle {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: auto;
       color: white;
       font-size: 14px;
     }
@@ -91,8 +86,8 @@
     .switch {
       position: relative;
       display: inline-block;
-      width: 40px;
-      height: 20px;
+      width: 48px;
+      height: 24px;
     }
 
     .switch input {
@@ -110,115 +105,104 @@
       bottom: 0;
       background-color: #444;
       transition: .3s;
-      border-radius: 20px;
+      border-radius: 24px;
     }
 
     .slider:before {
       position: absolute;
       content: "";
-      height: 16px;
-      width: 16px;
-      left: 2px;
-      bottom: 2px;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
       background-color: white;
       transition: .3s;
       border-radius: 50%;
     }
 
     input:checked + .slider {
-      background-color: #007CF3;
+      background-color: var(--accent);
     }
 
     input:checked + .slider:before {
-      transform: translateX(20px);
+      transform: translateX(24px);
     }
 
+    /* Chat Container */
     .chat-container {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background: var(--bg);
     }
 
     #chat-box {
       flex: 1;
-      padding: 20px;
+      padding: 24px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      scroll-behavior: smooth;
     }
 
     .message {
-      display: flex;
-      gap: 12px;
-      padding: 14px;
-      background-color: var(--bot-bubble);
-      border-radius: 10px;
-      max-width: 90%;
+      max-width: 85%;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      line-height: 1.55;
+      background: var(--bot-bubble);
       align-self: flex-start;
-      line-height: 1.5;
       position: relative;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     }
 
     .message.user {
       align-self: flex-end;
-      background-color: var(--user-bubble);
-    }
-
-    .message.user .avatar {
-      order: 2;
-      margin-left: 10px;
-    }
-
-    .message.user .content {
-      order: 1;
+      background: var(--user-bubble);
+      color: white;
     }
 
     .message .avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 5px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: bold;
       font-size: 14px;
-      background-color: #8f4fff;
+      background: #8f4fff;
+      flex-shrink: 0;
     }
 
     .message .content {
       flex: 1;
       word-wrap: break-word;
+      font-size: 15px;
     }
 
     .message code {
-      background-color: #3a3b40;
+      background: #3a3b40;
       padding: 2px 5px;
-      border-radius: 3px;
+      border-radius: 4px;
       font-family: 'Courier New', monospace;
-      font-size: 14px;
     }
 
     .message pre {
       background: #3a3b40;
-      padding: 10px;
-      border-radius: 6px;
+      padding: 12px;
+      border-radius: 8px;
       overflow: auto;
-      margin: 8px 0;
+      margin: 10px 0;
       font-size: 14px;
-    }
-
-    .message pre code {
-      background: none;
-      padding: 0;
-      font-size: 100%;
     }
 
     .message img {
       max-width: 100%;
-      border-radius: 6px;
+      border-radius: 8px;
       margin-top: 10px;
     }
 
@@ -228,13 +212,14 @@
       align-self: center;
       text-align: center;
       opacity: 0.9;
-      max-width: 80%;
+      max-width: 90%;
     }
 
     .message.welcome h2 {
       margin-bottom: 8px;
-      font-size: 24px;
+      font-size: 26px;
       color: white;
+      font-weight: 600;
     }
 
     .message.welcome p {
@@ -243,12 +228,14 @@
       color: #ddd;
     }
 
+    /* Input Area */
     .input-container {
-      padding: 20px;
+      padding: 16px 20px;
       display: flex;
       gap: 10px;
-      background-color: var(--bg);
+      background: var(--bg);
       border-top: 1px solid var(--border);
+      backdrop-filter: blur(10px);
     }
 
     #mic-btn, .upload-btn, .copy-btn, #export-btn {
@@ -267,44 +254,52 @@
 
     #user-input {
       flex: 1;
-      padding: 12px 16px;
+      padding: 14px 18px;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      background-color: var(--input-bg);
+      border-radius: var(--radius);
+      background: var(--input-bg);
       color: white;
       font-size: 15px;
       outline: none;
-    }
-
-    #user-input::placeholder {
-      color: #aaa;
+      resize: none;
+      min-height: 48px;
     }
 
     #user-input:focus {
-      border-color: var(--user-bubble);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(0, 124, 243, 0.2);
     }
 
     button {
-      padding: 12px 16px;
-      background-color: var(--user-bubble);
+      padding: 14px 18px;
+      background: var(--accent);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius);
       cursor: pointer;
       font-size: 15px;
+      font-weight: 500;
+      transition: background 0.2s;
     }
 
     button:hover {
-      background-color: var(--btn-hover);
+      background: #0065cc;
     }
 
     .copy-btn {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 8px;
+      right: 8px;
       font-size: 14px;
       opacity: 0;
       transition: opacity 0.2s;
+      background: #333;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .message:hover .copy-btn {
@@ -316,7 +311,7 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background-color: var(--toast-bg);
+      background: var(--toast-bg);
       color: white;
       padding: 10px 20px;
       border-radius: 6px;
@@ -331,6 +326,7 @@
       opacity: 1;
     }
 
+    /* Mobile Responsive */
     @media (max-width: 768px) {
       .app {
         flex-direction: column;
@@ -338,21 +334,62 @@
       .sidebar {
         width: 100%;
         height: auto;
+        max-height: 80px;
+        padding: 12px;
         flex-direction: row;
-        padding: 10px;
         gap: 10px;
+        overflow-x: auto;
+        white-space: nowrap;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .new-chat-btn {
+        font-size: 13px;
+        padding: 10px 12px;
       }
       .theme-toggle {
         order: 2;
+        margin-left: auto;
+      }
+      #chat-box {
+        padding: 16px;
+        gap: 12px;
+      }
+      .message {
+        max-width: 90%;
       }
       .input-container {
         position: sticky;
         bottom: 0;
-        background-color: var(--bg);
+        background: var(--bg);
         z-index: 10;
+        gap: 8px;
+        padding: 12px 16px;
       }
-      #chat-box {
-        padding-bottom: 80px;
+      #user-input {
+        font-size: 15px;
+        min-height: 44px;
+      }
+      button {
+        padding: 12px 16px;
+      }
+      .model-select select {
+        font-size: 13px;
+        padding: 6px 8px;
+      }
+    }
+
+    /* Full-screen fix for mobile */
+    @supports (-webkit-touch-callout: none) {
+      body {
+        min-height: 100vh;
+        height: -webkit-fill-available;
+      }
+      .app {
+        height: -webkit-fill-available;
+      }
+      .chat-container {
+        height: 100%;
       }
     }
   </style>
@@ -390,7 +427,7 @@
           <input type="file" id="file-input" accept="image/*,.txt,.pdf,.xlsx,.xls" style="display: none;" />
         </div>
         <div class="model-select">
-          <select id="model-select" style="padding: 8px; border: 1px solid #555; border-radius: 6px; background: #40414f; color: white; font-size: 14px; min-width: 120px;">
+          <select id="model-select" style="padding: 8px; border: 1px solid #555; border-radius: 6px; background: #40414f; color: white; font-size: 14px; min-width: 160px;">
             <option value="qwen/qwen3-32b">Qwen3-32B</option>
             <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
             <option value="openai/gpt-oss-20b">openai/gpt-oss-20b</option>
@@ -405,7 +442,7 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
+  <!-- Toast -->
   <div id="toast">Copied to clipboard!</div>
 
   <!-- Libraries -->
@@ -517,7 +554,6 @@
             pdf.getPage(1).then(page => {
               return page.getTextContent().then(tc => {
                 if (tc.items.length > 0) {
-                  console.log("✅ Digital PDF — using text extraction");
                   let promise = Promise.resolve();
                   for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
                     promise = promise.then(() => {
@@ -537,7 +573,6 @@
                     });
                   });
                 } else {
-                  console.log("❌ Scanned PDF — using OCR");
                   const img = document.createElement("img");
                   img.src = URL.createObjectURL(file);
                   img.style.display = "none";
@@ -561,13 +596,7 @@
                     });
                 }
               });
-            }).catch(err => {
-              addMessageToUI("user", "You", `📄 ${file.name} (error reading text layer)`);
-              console.error("Text Layer Error:", err);
             });
-          }).catch(err => {
-            addMessageToUI("user", "You", `📄 ${file.name} (failed to load PDF)`);
-            console.error("PDF Load Error:", err);
           });
         }
 
@@ -621,7 +650,6 @@
           chatBox.appendChild(msg);
           scrollToBottom();
 
-          // OCR for image
           Tesseract.recognize(img, 'eng')
             .then(result => {
               const text = result.data.text.trim();
@@ -631,13 +659,10 @@
                   role: "user",
                   content: `Image "${file.name}" OCR: ${text}`
                 });
-              } else {
-                addMessageToUI("bot", "Qwen", "No readable text found in the image.");
               }
             })
             .catch(err => {
               addMessageToUI("bot", "Qwen", "Failed to read text from image.");
-              console.error("OCR Error:", err);
             });
         }
 
@@ -649,11 +674,6 @@
             content: `File uploaded: ${file.name}`
           });
         }
-      };
-
-      reader.onerror = () => {
-        addMessageToUI("user", "You", `❌ Error reading ${file.name}`);
-        console.error("File Read Error:", reader.error);
       };
     });
 
@@ -691,10 +711,7 @@
           max_tokens: 1024,
         }),
       })
-      .then(res => {
-        if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         const reply = data.choices[0].message.content;
         chatBox.removeChild(thinking);
