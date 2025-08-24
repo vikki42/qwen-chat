@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Qwen Chat</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #343541;
+      --sidebar-bg: #202123;
+      --text: #e8eaed;
+      --input-bg: #40414f;
+      --border: #555;
+      --user-bubble: #007CF3;
+      --bot-bubble: #444654;
+      --btn-hover: #0065cc;
+      --toast-bg: #333;
+    }
+
+    .dark-mode {
+      --bg: #111;
+      --sidebar-bg: #1a1a1a;
+      --text: #eee;
+      --input-bg: #2d2d2e;
+      --border: #555;
+      --user-bubble: #0a84ff;
+      --bot-bubble: #2c2c2e;
+      --toast-bg: #222;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      transition: background-color 0.3s;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      width: 100%;
+      max-width: 1400px;
+      height: 100vh;
+      margin: 0 auto;
+    }
+
+    .sidebar {
+      width: 260px;
+      background-color: var(--sidebar-bg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      border-right: 1px solid var(--border);
+    }
+
+    .new-chat-btn {
+      background-color: var(--input-bg);
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .new-chat-btn:hover {
+      background-color: #555;
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      color: white;
+      font-size: 14px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #444;
+      transition: .3s;
+      border-radius: 20px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #007CF3;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #chat-box {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      padding: 14px;
+      background-color: var(--bot-bubble);
+      border-radius: 10px;
+      max-width: 90%;
+      align-self: flex-start;
+      line-height: 1.5;
+      position: relative;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background-color: var(--user-bubble);
+    }
+
+    .message.user .avatar {
+      order: 2;
+      margin-left: 10px;
+    }
+
+    .message.user .content {
+      order: 1;
+    }
+
+    .message .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      background-color: #8f4fff;
+    }
+
+    .message .content {
+      flex: 1;
+      word-wrap: break-word;
+    }
+
+    .message code {
+      background-color: #3a3b40;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+
+    .message pre {
+      background: #3a3b40;
+      padding: 10px;
+      border-radius: 6px;
+      overflow: auto;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+
+    .message pre code {
+      background: none;
+      padding: 0;
+      font-size: 100%;
+    }
+
+    .message img {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .message.welcome {
+      background: transparent;
+      border: none;
+      align-self: center;
+      text-align: center;
+      opacity: 0.9;
+      max-width: 80%;
+    }
+
+    .message.welcome h2 {
+      margin-bottom: 8px;
+      font-size: 24px;
+      color: white;
+    }
+
+    .message.welcome p {
+      margin: 5px 0;
+      font-size: 15px;
+      color: #ddd;
+    }
+
+    .input-container {
+      padding: 20px;
+      display: flex;
+      gap: 10px;
+      background-color: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+
+    #mic-btn, .upload-btn, .copy-btn, #export-btn {
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 10px;
+      transition: color 0.2s;
+    }
+
+    #mic-btn:hover, .upload-btn:hover, .copy-btn:hover, #export-btn:hover {
+      color: white;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background-color: var(--input-bg);
+      color: white;
+      font-size: 15px;
+      outline: none;
+    }
+
+    #user-input::placeholder {
+      color: #aaa;
+    }
+
+    #user-input:focus {
+      border-color: var(--user-bubble);
+    }
+
+    button {
+      padding: 12px 16px;
+      background-color: var(--user-bubble);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background-color: var(--btn-hover);
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .message:hover .copy-btn {
+      opacity: 1;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--toast-bg);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    #toast.show {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        padding: 10px;
+        gap: 10px;
+      }
+      .theme-toggle {
+        order: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <button class="new-chat-btn">+ New Chat</button>
+      <div class="theme-toggle">
+        <span>🌙</span>
+        <label class="switch">
+          <input type="checkbox" id="dark-mode-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Main Chat -->
+    <div class="chat-container">
+      <div id="chat-box">
+        <div class="message welcome">
+          <h2>Qwen3</h2>
+          <p>Welcome! I'm powered by <strong>qwen/qwen3-32b</strong> via Groq.</p>
+          <p>Upload images, PDFs, Excel, or speak your message.</p>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-container">
+        <button id="mic-btn" title="Voice Input">🎤</button>
+        <input type="text" id="user-input" placeholder="Message Qwen..." />
+        <div class="file-upload">
+          <label for="file-input" class="upload-btn">📎</label>
+          <input type="file" id="file-input" accept="image/*,.txt,.pdf,.xlsx,.xls" style="display: none;" />
+        </div>
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast">Copied to clipboard!</div>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js  "></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js  "></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js  "></script>
+  <script>
+    // Initialize PDF.js worker
+    window.pdfjsLib && (pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js  ');
+  </script>
+
+  <script>
+    // ✅ Replace with your Groq API key
+    const GROQ_API_KEY = "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";
+
+    // DOM Elements
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
+    const micBtn = document.getElementById("mic-btn");
+    const fileInput = document.getElementById("file-input");
+    const newChatBtn = document.querySelector(".new-chat-btn");
+    const toast = document.getElementById("toast");
+    const darkModeToggle = document.getElementById("dark-mode-toggle");
+
+    // Chat State
+    let messages = [];
+    let welcomeRemoved = false;
+
+    // Load saved chat
+    loadChat();
+
+    // 🌙 Dark Mode
+    if (localStorage.getItem("dark-mode") === "true") {
+      document.body.classList.add("dark-mode");
+      darkModeToggle.checked = true;
+    }
+    darkModeToggle.addEventListener("change", () => {
+      if (darkModeToggle.checked) {
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("dark-mode", "true");
+      } else {
+        document.body.classList.remove("dark-mode");
+        localStorage.setItem("dark-mode", "false");
+      }
+    });
+
+    // 🎤 Voice Recognition
+    let recognizing = false;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+    if (recognition) {
+      recognition.continuous = false;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userInput.value = transcript;
+        micBtn.textContent = "🎤";
+        recognizing = false;
+      };
+
+      recognition.onerror = () => {
+        micBtn.textContent = "🎤";
+        recognizing = false;
+      };
+
+      micBtn.addEventListener("click", () => {
+        if (recognizing) {
+          recognition.stop();
+          micBtn.textContent = "🎤";
+          recognizing = false;
+        } else {
+          recognition.start();
+          micBtn.textContent = "🔴";
+          recognizing = true;
+        }
+      });
+    } else {
+      micBtn.style.display = "none";
+    }
+
+    // 📎 File Upload Handler
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      if (file.type === "application/pdf") {
+        reader.readAsArrayBuffer(file);
+      } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+        reader.readAsArrayBuffer(file);
+      } else if (file.type === "text/plain") {
+        reader.readAsText(file);
+      } else {
+        reader.readAsDataURL(file);
+      }
+
+      reader.onload = (event) => {
+        const result = event.target.result;
+
+        // 📄 PDF: Digital or Scanned
+        if (file.type === "application/pdf") {
+          const typedArray = new Uint8Array(result);
+          pdfjsLib.getDocument(typedArray).promise.then(pdf => {
+            let fullText = "";
+
+            // Check if text exists
+            pdf.getPage(1).then(page => {
+              return page.getTextContent().then(tc => {
+                if (tc.items.length > 0) {
+                  console.log("✅ Digital PDF — using text extraction");
+                  let promise = Promise.resolve();
+                  for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+                    promise = promise.then(() => {
+                      return pdf.getPage(i).then(p => {
+                        return p.getTextContent().then(content => {
+                          fullText += `\n\nPage ${i}:\n` + content.items.map(item => item.str).join(" ");
+                        });
+                      });
+                    });
+                  }
+                  promise.then(() => {
+                    const preview = fullText.substring(0, 300) + "...";
+                    addMessageToUI("user", "You", `📄 ${file.name}\n${preview}`);
+                    messages.push({
+                      role: "user",
+                      content: `PDF (${file.name}): ${fullText}`
+                    });
+                  });
+                } else {
+                  console.log("❌ Scanned PDF — using OCR");
+                  const img = document.createElement("img");
+                  img.src = URL.createObjectURL(file);
+                  img.style.display = "none";
+                  document.body.appendChild(img);
+
+                  Tesseract.recognize(img, 'eng')
+                    .then(result => {
+                      document.body.removeChild(img);
+                      const text = result.data.text.trim();
+                      const preview = text.substring(0, 300) + "...";
+                      addMessageToUI("user", "You", `📄 ${file.name} (scanned)\n${preview}`);
+                      messages.push({
+                        role: "user",
+                        content: `Scanned PDF (${file.name}): ${text}`
+                      });
+                    })
+                    .catch(err => {
+                      document.body.removeChild(img);
+                      addMessageToUI("user", "You", `📄 ${file.name} (OCR failed)`);
+                      console.error("OCR Error:", err);
+                    });
+                }
+              });
+            }).catch(err => {
+              addMessageToUI("user", "You", `📄 ${file.name} (error reading text layer)`);
+              console.error("Text Layer Error:", err);
+            });
+          }).catch(err => {
+            addMessageToUI("user", "You", `📄 ${file.name} (failed to load PDF)`);
+            console.error("PDF Load Error:", err);
+          });
+        }
+
+        // 📊 Excel
+        else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+          try {
+            const data = new Uint8Array(result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            let fullData = "";
+            workbook.SheetNames.forEach(sheetName => {
+              const ws = workbook.Sheets[sheetName];
+              const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+              fullData += `\nSheet: ${sheetName}\n`;
+              json.forEach(row => fullData += row.join("\t") + "\n");
+            });
+            const preview = fullData.substring(0, 300) + "...";
+            addMessageToUI("user", "You", `📊 ${file.name}\n${preview}`);
+            messages.push({
+              role: "user",
+              content: `Excel (${file.name}):\n${fullData}`
+            });
+          } catch (err) {
+            addMessageToUI("user", "You", `📊 ${file.name} (failed to read)`);
+            console.error("Excel Error:", err);
+          }
+        }
+
+        // 📝 Text
+        else if (file.type === "text/plain") {
+          const text = result;
+          const preview = text.substring(0, 300) + "...";
+          addMessageToUI("user", "You", `📝 ${file.name}\n${preview}`);
+          messages.push({
+            role: "user",
+            content: `Text (${file.name}): ${text}`
+          });
+        }
+
+        // 🖼️ Image
+        else if (file.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = event.target.result;
+          img.style.maxWidth = "100%";
+          img.style.borderRadius = "6px";
+          img.style.marginTop = "10px";
+
+          const msg = document.createElement("div");
+          msg.className = "message user";
+          msg.innerHTML = `<div class="avatar">You</div><div class="content">${file.name}</div>`;
+          msg.appendChild(img);
+          chatBox.appendChild(msg);
+          scrollToBottom();
+
+          // OCR for image
+          Tesseract.recognize(img, 'eng')
+            .then(result => {
+              const text = result.data.text.trim();
+              if (text) {
+                addMessageToUI("bot", "Qwen", `I found this text:\n\n"${text}"\n\nYou can now ask me about it.`);
+                messages.push({
+                  role: "user",
+                  content: `Image "${file.name}" OCR: ${text}`
+                });
+              } else {
+                addMessageToUI("bot", "Qwen", "No readable text found in the image.");
+              }
+            })
+            .catch(err => {
+              addMessageToUI("bot", "Qwen", "Failed to read text from image.");
+              console.error("OCR Error:", err);
+            });
+        }
+
+        // 📎 Other
+        else {
+          addMessageToUI("user", "You", `📎 ${file.name}`);
+          messages.push({
+            role: "user",
+            content: `File uploaded: ${file.name}`
+          });
+        }
+      };
+
+      reader.onerror = () => {
+        addMessageToUI("user", "You", `❌ Error reading ${file.name}`);
+        console.error("File Read Error:", reader.error);
+      };
+    });
+
+    // 🚀 Send Message
+    function sendMessage() {
+      const userMsg = userInput.value.trim();
+      if (!userMsg) return;
+
+      if (!welcomeRemoved) {
+        document.querySelector(".welcome")?.remove();
+        welcomeRemoved = true;
+      }
+
+      addMessageToUI("user", "You", userMsg);
+      messages.push({ role: "user", content: userMsg });
+
+      userInput.value = "";
+
+      const thinking = document.createElement("div");
+      thinking.className = "message bot";
+      thinking.innerHTML = `<div class="avatar">Q</div><div class="content"><em>Thinking...</em></div>`;
+      chatBox.appendChild(thinking);
+      scrollToBottom();
+
+      fetch("https://api.groq.com/openai/v1/chat/completions  ", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "qwen/qwen3-32b",
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 1024,
+        }),
+      })
+      .then(res => {
+        if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+        return res.json();
+      })
+      .then(data => {
+        const reply = data.choices[0].message.content;
+        chatBox.removeChild(thinking);
+        addMessageToUI("bot", "Qwen", reply);
+        messages.push({ role: "assistant", content: reply });
+        saveChat();
+      })
+      .catch(err => {
+        thinking.querySelector(".content").textContent = "Error: " + err.message;
+      });
+    }
+
+    // 📧 Add Message to UI
+    function addMessageToUI(role, sender, text) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", role);
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = sender[0];
+
+      const content = document.createElement("div");
+      content.className = "content";
+      content.innerHTML = formatMessage(text);
+
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "copy-btn";
+      copyBtn.textContent = "📋";
+      copyBtn.onclick = () => copyText(content.innerText);
+
+      msg.appendChild(avatar);
+      msg.appendChild(content);
+      msg.appendChild(copyBtn);
+      chatBox.appendChild(msg);
+      scrollToBottom();
+    }
+
+    // 📝 Format Message
+    function formatMessage(text) {
+      return text
+        .replace(/```(\w+)?\n([\s\S]*?)\n```/g, '<pre><code class="language-$1">$2</code></pre>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\n/g, '<br>');
+    }
+
+    // 📋 Copy to Clipboard
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+      });
+    }
+
+    // 📉 Scroll to Bottom
+    function scrollToBottom() {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // 💾 Save Chat
+    function saveChat() {
+      localStorage.setItem("qwen-chat-history", JSON.stringify({ messages, welcomeRemoved }));
+    }
+
+    // 🔁 Load Chat
+    function loadChat() {
+      const saved = localStorage.getItem("qwen-chat-history");
+      if (saved) {
+        const { messages: savedMessages, welcomeRemoved: savedWelcome } = JSON.parse(saved);
+        messages = savedMessages;
+        welcomeRemoved = savedWelcome;
+
+        chatBox.innerHTML = "";
+        messages.forEach(msg => {
+          if (msg.content) {
+            const sender = msg.role === "user" ? "You" : "Qwen";
+            const role = msg.role === "user" ? "user" : "bot";
+            addMessageToUI(role, sender, msg.content);
+          }
+        });
+
+        if (welcomeRemoved) {
+          document.querySelector(".welcome")?.remove();
+        }
+      }
+    }
+
+    // ➕ New Chat
+    newChatBtn.addEventListener("click", () => {
+      if (confirm("Start a new chat?")) {
+        messages = [];
+        welcomeRemoved = false;
+        chatBox.innerHTML = `
+          <div class="message welcome">
+            <h2>Qwen3</h2>
+            <p>Welcome! I'm powered by <strong>qwen/qwen3-32b</strong>.</p>
+          </div>`;
+        localStorage.removeItem("qwen-chat-history");
+      }
+    });
+
+    // 📤 Export Chat
+    const exportBtn = document.createElement("button");
+    exportBtn.id = "export-btn";
+    exportBtn.title = "Export Chat";
+    exportBtn.textContent = "📤";
+    exportBtn.onclick = () => {
+      const exportText = messages.map(m => `${m.role.toUpperCase()}:\n${m.content}\n`).join("\n---\n");
+      const blob = new Blob([exportText], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `qwen-chat-${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    document.querySelector(".input-container").appendChild(exportBtn);
+
+    // ⏎ Enter to Send
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
+
+
